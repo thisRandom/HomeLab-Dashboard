@@ -13,6 +13,7 @@ import RealtimeSpeedCard from './Dashboard/ikuai/cards/RealtimeSpeedCard.vue'
 import DeviceListCard from './Dashboard/ikuai/cards/DeviceListCard.vue'
 import SystemStatsCard from './Dashboard/ikuai/cards/SystemStatsCard.vue'
 import TemperatureCard from './Dashboard/ikuai/cards/TemperatureCard.vue'
+import WanStatusCard from './Dashboard/ikuai/cards/WanStatusCard.vue'
 
 const COLS = 12
 const GAP = 2

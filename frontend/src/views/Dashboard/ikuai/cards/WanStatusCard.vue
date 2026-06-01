@@ -48,6 +48,11 @@ const ifaces = computed<WanIface[]>(() => {
 
 const onlineCount = computed(() => ifaces.value.filter(i => i.status === 'online').length)
 
+const deviceCount = computed(() => {
+  const v = props.metrics['lan.device_count']?.value
+  return typeof v === 'number' ? v : 0
+})
+
 function isOnline(status: string): boolean {
   return status === 'online'
 }
@@ -121,6 +126,12 @@ function splitSpeed(bps: number): { num: string; unit: string } {
       <div v-if="ifaces.length === 0" class="wan-empty">
         <span :style="{ color: textTer }">采集中...</span>
       </div>
+    </div>
+
+    <!-- LAN summary -->
+    <div class="lan-bar" :style="{ background: bgColor, border: `1px solid ${borderColor}` }">
+      <span class="lan-label" :style="{ color: textSec }">LAN</span>
+      <span class="lan-count" :style="{ color: textColor }">{{ deviceCount }}<span class="lan-unit" :style="{ color: textTer }"> 台</span></span>
     </div>
   </div>
 </template>
@@ -219,5 +230,32 @@ function splitSpeed(bps: number): { num: string; unit: string } {
   font-size: 10px;
   font-family: 'SF Mono', 'Cascadia Code', 'JetBrains Mono', 'Menlo', monospace;
   margin-left: auto;
+}
+
+.lan-bar {
+  flex-shrink: 0;
+  border-radius: 8px;
+  padding: 6px 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.lan-label {
+  font-size: 11px;
+  font-weight: 500;
+  font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+}
+
+.lan-count {
+  font-size: 14px;
+  font-weight: 700;
+  font-family: 'SF Mono', 'Cascadia Code', 'JetBrains Mono', 'Menlo', monospace;
+}
+
+.lan-unit {
+  font-size: 11px;
+  font-weight: 400;
+  margin-left: 1px;
 }
 </style>

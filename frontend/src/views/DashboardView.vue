@@ -14,6 +14,7 @@ import DeviceListCard from './Dashboard/ikuai/cards/DeviceListCard.vue'
 import SystemStatsCard from './Dashboard/ikuai/cards/SystemStatsCard.vue'
 import TemperatureCard from './Dashboard/ikuai/cards/TemperatureCard.vue'
 import WanStatusCard from './Dashboard/ikuai/cards/WanStatusCard.vue'
+import CpuTempCard from './Dashboard/ikuai/cards/CpuTempCard.vue'
 
 const COLS = 12
 const GAP = 2
@@ -45,6 +46,8 @@ const cardDefs: CardDef[] = [
   { type: 'traffic', title: '累计流量', icon: '📡', w: 1, h: 1, freq: 'slow', pluginId: 'ikuai', component: markRaw(TrafficCard) },
   { type: 'speed',   title: '实时速率', icon: '⚡', w: 1, h: 1, freq: 'realtime', pluginId: 'ikuai', component: markRaw(SpeedCard) },
   { type: 'temperature', title: 'CPU温度', icon: '🌡️', w: 1, h: 1, freq: 'realtime', pluginId: 'ikuai', component: markRaw(TemperatureCard) },
+  { type: 'cpuTemp', title: 'CPU温度监控', icon: '📈', w: 2, h: 2, freq: 'realtime', pluginId: 'ikuai', component: markRaw(CpuTempCard) },
+  { type: 'wanStatus', title: 'WAN 状态', icon: '🌐', w: 1, h: 2, freq: 'frequent', pluginId: 'ikuai', component: markRaw(WanStatusCard) },
   { type: 'systemStats', title: '系统状态', icon: '📊', w: 2, h: 1, freq: 'realtime', pluginId: 'ikuai', component: markRaw(SystemStatsCard) },
   { type: 'realtimeSpeed', title: '实时速率', icon: '⚡', w: 3, h: 2, freq: 'realtime', pluginId: 'ikuai', component: markRaw(RealtimeSpeedCard) },
   { type: 'deviceList', title: '在线用户', icon: '📱', w: 2, h: 3, freq: 'slow', pluginId: 'ikuai', component: markRaw(DeviceListCard) },

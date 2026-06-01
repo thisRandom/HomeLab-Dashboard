@@ -59,9 +59,9 @@ const uptimeStr = computed(() => {
   return `${minutes} 分`
 })
 
-// 在线设备数
-const deviceCount = computed(() => {
-  const v = props.metrics['lan.device_count']?.value
+// 在线用户数（包括VPN拨入等）
+const onlineUserCount = computed(() => {
+  const v = props.metrics['online_user.count']?.value
   return typeof v === 'number' ? v : 0
 })
 </script>
@@ -101,7 +101,7 @@ const deviceCount = computed(() => {
         <div style="display:flex;align-items:center;gap:4px;">
           <span style="font-size:16px;font-weight:700;font-family:'SF Mono','Cascadia Code','JetBrains Mono','Menlo',monospace;"
                 :style="{ color: accentBlue }">
-            {{ deviceCount }}
+            {{ onlineUserCount }}
           </span>
           <span style="font-size:10px;" :style="{ color: textSec }">人</span>
         </div>

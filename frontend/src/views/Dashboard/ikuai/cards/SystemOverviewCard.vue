@@ -21,6 +21,15 @@ const version = computed(() => {
   return typeof v === 'string' ? v : '--'
 })
 
+// 版本号简化显示（只取主要版本）
+const versionShort = computed(() => {
+  const v = version.value
+  if (v === '--') return v
+  // 提取主要版本号，如 "3.7.22 x32 Build..." -> "3.7.22"
+  const match = v.match(/^(\d+\.\d+\.\d+)/)
+  return match ? match[1] : v.split(' ')[0]
+})
+
 // 运行时间
 const uptime = computed(() => {
   const v = props.metrics['system.uptime']?.value
@@ -60,11 +69,15 @@ const deviceCount = computed(() => {
 <template>
   <div style="display:flex;flex-direction:column;width:100%;height:100%;padding:12px;gap:10px;">
     <!-- 顶部：主机名 + 版本 -->
-    <div style="display:flex;align-items:center;justify-content:space-between;">
-      <span style="font-size:13px;font-weight:600;" :style="{ color: textColor }">{{ hostname }}</span>
-      <span style="font-size:10px;font-family:'SF Mono','Cascadia Code','JetBrains Mono','Menlo',monospace;padding:2px 6px;border-radius:4px;"
-            :style="{ background: bgColor, color: textTer }">
-        {{ version }}
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+      <span style="font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"
+            :style="{ color: textColor }">
+        {{ hostname }}
+      </span>
+      <span style="font-size:9px;font-family:'SF Mono','Cascadia Code','JetBrains Mono','Menlo',monospace;padding:2px 6px;border-radius:4px;white-space:nowrap;flex-shrink:0;"
+            :style="{ background: bgColor, color: textTer }"
+            :title="version">
+        {{ versionShort }}
       </span>
     </div>
 

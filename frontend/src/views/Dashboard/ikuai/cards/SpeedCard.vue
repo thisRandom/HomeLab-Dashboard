@@ -49,7 +49,7 @@ const downSpeed = computed(() => splitSpeed(downVal.value))
         style="margin-left:2px;"
       />
     </div>
-    <div style="display:flex;align-items:baseline;padding-left:10px;">
+    <div style="display:flex;align-items:baseline;">
       <span style="color:#2DD4BF;font-size:12px;margin-right:4px;">↓</span>
       <FlipText
         :text="downSpeed.num"

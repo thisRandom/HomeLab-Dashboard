@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { onMounted, reactive, ref } from 'vue'
 import { usePluginStore } from '../stores/plugin'
+import { getAllConfig, saveConfigBatch } from '../api/config'
 import { Message } from '@arco-design/web-vue'
 
 const store = usePluginStore()
@@ -17,6 +18,14 @@ const form = reactive({
   password: '',
 })
 
+// Polling interval settings
+const pollingForm = reactive({
+  realtime: 2000,
+  frequent: 30000,
+  slow: 300000,
+})
+const pollingLoading = ref(false)
+
 onMounted(async () => {
   await store.fetchPlugins()
   const plugin = store.plugins.find(p => p.pluginId === 'ikuai')
@@ -27,7 +36,54 @@ onMounted(async () => {
   form.address = store.ikuaiConfig.address || ''
   form.username = store.ikuaiConfig.username || ''
   form.password = store.ikuaiConfig.password || ''
+
+  // Load polling interval settings
+  await loadPollingConfig()
 })
+
+async function loadPollingConfig() {
+  try {
+    const { data } = await getAllConfig()
+    const realtimeConfig = data.find(c => c.configKey === 'polling_realtime_interval')
+    const frequentConfig = data.find(c => c.configKey === 'polling_frequent_interval')
+    const slowConfig = data.find(c => c.configKey === 'polling_slow_interval')
+    if (realtimeConfig?.configValue) pollingForm.realtime = parseInt(realtimeConfig.configValue) || 2000
+    if (frequentConfig?.configValue) pollingForm.frequent = parseInt(frequentConfig.configValue) || 30000
+    if (slowConfig?.configValue) pollingForm.slow = parseInt(slowConfig.configValue) || 300000
+  } catch {
+    // use defaults
+  }
+}
+
+async function savePollingConfig() {
+  // Validate values
+  if (pollingForm.realtime < 500) {
+    Message.warning('实时数据间隔不能小于 500ms')
+    return
+  }
+  if (pollingForm.frequent < 1000) {
+    Message.warning('频繁数据间隔不能小于 1000ms')
+    return
+  }
+  if (pollingForm.slow < 5000) {
+    Message.warning('慢速数据间隔不能小于 5000ms')
+    return
+  }
+
+  pollingLoading.value = true
+  try {
+    await saveConfigBatch([
+      { key: 'polling_realtime_interval', value: String(pollingForm.realtime), valueType: 'number' },
+      { key: 'polling_frequent_interval', value: String(pollingForm.frequent), valueType: 'number' },
+      { key: 'polling_slow_interval', value: String(pollingForm.slow), valueType: 'number' },
+    ])
+    Message.success('轮询间隔设置已保存')
+  } catch {
+    Message.error('保存失败')
+  } finally {
+    pollingLoading.value = false
+  }
+}
 
 function handleToggle(val: string | number | boolean) {
   const newVal = !!val
@@ -178,6 +234,66 @@ async function showDetail() {
         </a-form-item>
       </a-form>
     </a-modal>
+
+    <!-- Polling Interval Settings -->
+    <a-card title="数据轮询间隔" :bordered="true">
+      <template #extra>
+        <a-button type="primary" :loading="pollingLoading" @click="savePollingConfig">
+          保存设置
+        </a-button>
+      </template>
+
+      <a-alert type="info" style="margin-bottom: 16px">
+        调整前端数据刷新频率。修改后需刷新页面生效。
+      </a-alert>
+
+      <a-form :model="pollingForm" layout="vertical">
+        <a-row :gutter="16">
+          <a-col :span="8">
+            <a-form-item label="实时数据间隔 (ms)">
+              <a-input-number
+                v-model="pollingForm.realtime"
+                :min="500"
+                :max="10000"
+                :step="500"
+                placeholder="2000"
+              />
+              <a-typography-text type="secondary" style="font-size: 12px; margin-top: 4px; display: block;">
+                默认 2000ms (2秒)，用于实时速率等高频数据
+              </a-typography-text>
+            </a-form-item>
+          </a-col>
+          <a-col :span="8">
+            <a-form-item label="频繁数据间隔 (ms)">
+              <a-input-number
+                v-model="pollingForm.frequent"
+                :min="1000"
+                :max="60000"
+                :step="5000"
+                placeholder="30000"
+              />
+              <a-typography-text type="secondary" style="font-size: 12px; margin-top: 4px; display: block;">
+                默认 30000ms (30秒)，用于系统状态等中频数据
+              </a-typography-text>
+            </a-form-item>
+          </a-col>
+          <a-col :span="8">
+            <a-form-item label="慢速数据间隔 (ms)">
+              <a-input-number
+                v-model="pollingForm.slow"
+                :min="5000"
+                :max="3600000"
+                :step="60000"
+                placeholder="300000"
+              />
+              <a-typography-text type="secondary" style="font-size: 12px; margin-top: 4px; display: block;">
+                默认 300000ms (5分钟)，用于累计流量等低频数据
+              </a-typography-text>
+            </a-form-item>
+          </a-col>
+        </a-row>
+      </a-form>
+    </a-card>
   </div>
 </template>
 

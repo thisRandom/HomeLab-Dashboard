@@ -76,7 +76,10 @@ INSERT INTO system_config (config_key, config_value, value_type) VALUES
 ('card_blur',              '20',       'number'),
 ('collect_interval',       '5000',     'number'),
 ('data_retention_days',    '90',       'number'),
-('ws_broadcast_interval',  '1000',     'number');
+('ws_broadcast_interval',  '1000',     'number'),
+('polling_realtime_interval',  '2000',   'number'),
+('polling_frequent_interval',  '30000',  'number'),
+('polling_slow_interval',      '300000', 'number');
 
 -- -----------------------------------------------------------
 -- 5. 流量记账表（后端定时任务每日自动写入）

@@ -69,6 +69,13 @@ let realtimeTimer: ReturnType<typeof setInterval> | null = null
 let frequentTimer: ReturnType<typeof setInterval> | null = null
 let slowTimer: ReturnType<typeof setInterval> | null = null
 
+// Polling intervals (default values, can be configured in admin)
+const pollingIntervals = ref({
+  realtime: 2000,
+  frequent: 30000,
+  slow: 300000,
+})
+
 const cell = computed(() => {
   const w = containerW.value - (COLS - 1) * GAP
   return Math.floor(w / COLS)
@@ -155,9 +162,9 @@ function startPolling() {
   fetchRealtime()
   fetchFrequent()
   fetchSlow()
-  realtimeTimer = setInterval(fetchRealtime, 2000)
-  frequentTimer = setInterval(fetchFrequent, 30000)
-  slowTimer = setInterval(fetchSlow, 300000)
+  realtimeTimer = setInterval(fetchRealtime, pollingIntervals.value.realtime)
+  frequentTimer = setInterval(fetchFrequent, pollingIntervals.value.frequent)
+  slowTimer = setInterval(fetchSlow, pollingIntervals.value.slow)
 }
 
 function stopPolling() {
@@ -197,6 +204,22 @@ async function loadBackground() {
     if (blurConfig?.configValue) {
       const v = parseInt(blurConfig.configValue)
       if (!isNaN(v) && v >= 0 && v <= 50) cardBlur.value = v
+    }
+    // Load polling intervals
+    const realtimeConfig = data.find(c => c.configKey === 'polling_realtime_interval')
+    const frequentConfig = data.find(c => c.configKey === 'polling_frequent_interval')
+    const slowConfig = data.find(c => c.configKey === 'polling_slow_interval')
+    if (realtimeConfig?.configValue) {
+      const v = parseInt(realtimeConfig.configValue)
+      if (!isNaN(v) && v >= 500) pollingIntervals.value.realtime = v
+    }
+    if (frequentConfig?.configValue) {
+      const v = parseInt(frequentConfig.configValue)
+      if (!isNaN(v) && v >= 1000) pollingIntervals.value.frequent = v
+    }
+    if (slowConfig?.configValue) {
+      const v = parseInt(slowConfig.configValue)
+      if (!isNaN(v) && v >= 5000) pollingIntervals.value.slow = v
     }
   } catch {
     // use default

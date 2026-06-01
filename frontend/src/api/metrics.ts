@@ -14,14 +14,14 @@ export interface CollectedMetrics {
   metrics: Record<string, MetricValue>
 }
 
-export function getRealtime() {
-  return request.get<Record<string, CollectedMetrics>>('/metrics/realtime')
+export function getRealtime(template = 'network-overview') {
+  return request.get<Record<string, CollectedMetrics>>('/metrics/realtime', { params: { template } })
 }
 
-export function getFrequent() {
-  return request.get<Record<string, CollectedMetrics>>('/metrics/frequent')
+export function getFrequent(template = 'network-overview') {
+  return request.get<Record<string, CollectedMetrics>>('/metrics/frequent', { params: { template } })
 }
 
-export function getSlow() {
-  return request.get<Record<string, CollectedMetrics>>('/metrics/slow')
+export function getSlow(template = 'network-overview') {
+  return request.get<Record<string, CollectedMetrics>>('/metrics/slow', { params: { template } })
 }

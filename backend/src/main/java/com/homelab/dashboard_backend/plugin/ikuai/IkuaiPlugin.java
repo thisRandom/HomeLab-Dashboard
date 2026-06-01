@@ -237,6 +237,37 @@ public class IkuaiPlugin implements CollectorPlugin {
                 .displayName("在线设备列表")
                 .type(MetricType.INFO)
                 .build());
+
+        // Device details as JSON (for DeviceTrafficCard)
+        StringBuilder deviceJson = new StringBuilder("[");
+        for (int i = 0; i < devices.size(); i++) {
+            IkuaiClient.LanDevice d = devices.get(i);
+            if (i > 0) deviceJson.append(",");
+            deviceJson.append("{");
+            deviceJson.append("\"hostname\":\"").append(escapeJson(d.hostname != null ? d.hostname : "")).append("\",");
+            deviceJson.append("\"ip\":\"").append(escapeJson(d.ipAddr != null ? d.ipAddr : "")).append("\",");
+            deviceJson.append("\"mac\":\"").append(escapeJson(d.mac != null ? d.mac : "")).append("\",");
+            deviceJson.append("\"upload\":").append(d.upload).append(",");
+            deviceJson.append("\"download\":").append(d.download).append(",");
+            deviceJson.append("\"totalUp\":").append(d.totalUp).append(",");
+            deviceJson.append("\"totalDown\":").append(d.totalDown).append(",");
+            deviceJson.append("\"clientType\":\"").append(escapeJson(d.clientType != null ? d.clientType : "")).append("\",");
+            deviceJson.append("\"signal\":\"").append(escapeJson(d.signal != null ? d.signal : "")).append("\",");
+            deviceJson.append("\"ssid\":\"").append(escapeJson(d.ssid != null ? d.ssid : "")).append("\"");
+            deviceJson.append("}");
+        }
+        deviceJson.append("]");
+        metrics.put("lan.device_details", MetricValue.builder()
+                .key("lan.device_details")
+                .value(deviceJson.toString())
+                .unit("")
+                .displayName("设备流量详情")
+                .type(MetricType.INFO)
+                .build());
+    }
+
+    private String escapeJson(String s) {
+        return s.replace("\\", "\\\\").replace("\"", "\\\"");
     }
 
     private void collectSlow(Map<String, MetricValue> metrics) {
@@ -370,5 +401,29 @@ public class IkuaiPlugin implements CollectorPlugin {
         healthy = false;
         client = null;
         log.info("iKuai plugin destroyed");
+    }
+
+    /**
+     * 获取 LAN 设备详细信息（实时速率、累计流量等）
+     */
+    public List<Map<String, Object>> fetchDeviceDetails() {
+        if (client == null) return List.of();
+        List<IkuaiClient.LanDevice> devices = client.fetchLanDevices();
+        List<Map<String, Object>> result = new ArrayList<>();
+        for (IkuaiClient.LanDevice d : devices) {
+            Map<String, Object> map = new LinkedHashMap<>();
+            map.put("hostname", d.hostname != null ? d.hostname : "");
+            map.put("ip", d.ipAddr != null ? d.ipAddr : "");
+            map.put("mac", d.mac != null ? d.mac : "");
+            map.put("upload", d.upload);
+            map.put("download", d.download);
+            map.put("totalUp", d.totalUp);
+            map.put("totalDown", d.totalDown);
+            map.put("clientType", d.clientType != null ? d.clientType : "");
+            map.put("signal", d.signal != null ? d.signal : "");
+            map.put("ssid", d.ssid != null ? d.ssid : "");
+            result.add(map);
+        }
+        return result;
     }
 }

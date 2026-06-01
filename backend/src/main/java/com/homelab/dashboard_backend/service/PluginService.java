@@ -23,6 +23,10 @@ public class PluginService {
         this.pluginConfigMapper = pluginConfigMapper;
     }
 
+    public CollectorPlugin getPlugin(String pluginId) {
+        return plugins.get(pluginId);
+    }
+
     public List<CollectorPlugin> getEnabledPlugins() {
         List<CollectorPlugin> result = new ArrayList<>();
 

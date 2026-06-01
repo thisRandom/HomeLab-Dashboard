@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, markRaw } from 'vue'
-import { getCards, saveCards } from '../api/dashboard'
+import { getCards, saveCards, setEditing } from '../api/dashboard'
 import { getRealtime, getFrequent, getSlow } from '../api/metrics'
 import { getAllConfig } from '../api/config'
 import { listPlugins } from '../api/plugin'
@@ -17,6 +17,7 @@ import WanStatusCard from './Dashboard/ikuai/cards/WanStatusCard.vue'
 import CpuTempCard from './Dashboard/ikuai/cards/CpuTempCard.vue'
 import UptimeCard from './Dashboard/ikuai/cards/UptimeCard.vue'
 import SystemOverviewCard from './Dashboard/ikuai/cards/SystemOverviewCard.vue'
+import DeviceTrafficCard from './Dashboard/ikuai/cards/DeviceTrafficCard.vue'
 
 const COLS = 12
 const GAP = 2
@@ -55,6 +56,7 @@ const cardDefs: CardDef[] = [
   { type: 'systemStats', title: '系统状态', icon: '📊', w: 2, h: 1, freq: 'realtime', pluginId: 'ikuai', component: markRaw(SystemStatsCard) },
   { type: 'realtimeSpeed', title: '实时速率', icon: '⚡', w: 3, h: 2, freq: 'realtime', pluginId: 'ikuai', component: markRaw(RealtimeSpeedCard) },
   { type: 'deviceList', title: '在线用户', icon: '📱', w: 2, h: 3, freq: 'slow', pluginId: 'ikuai', component: markRaw(DeviceListCard) },
+  { type: 'deviceTraffic', title: '设备流量', icon: '📊', w: 2, h: 2, freq: 'realtime', pluginId: 'ikuai', component: markRaw(DeviceTrafficCard) },
 ]
 
 const editing = ref(false)
@@ -160,15 +162,15 @@ function mergeMetrics(data: Record<string, { metrics: Record<string, MetricValue
 }
 
 async function fetchRealtime() {
-  try { const { data } = await getRealtime(); mergeMetrics(data) } catch {}
+  try { const { data } = await getRealtime(TEMPLATE); mergeMetrics(data) } catch {}
 }
 
 async function fetchFrequent() {
-  try { const { data } = await getFrequent(); mergeMetrics(data) } catch {}
+  try { const { data } = await getFrequent(TEMPLATE); mergeMetrics(data) } catch {}
 }
 
 async function fetchSlow() {
-  try { const { data } = await getSlow(); mergeMetrics(data) } catch {}
+  try { const { data } = await getSlow(TEMPLATE); mergeMetrics(data) } catch {}
 }
 
 function startPolling() {
@@ -334,8 +336,12 @@ function onDragEnd() {
 async function toggleEdit() {
   if (editing.value) {
     await saveLayout()
+    // 保存后退出编辑模式，通知后端
+    try { await setEditing(TEMPLATE, false) } catch {}
   } else {
     editing.value = true
+    // 进入编辑模式，通知后端返回全量指标
+    try { await setEditing(TEMPLATE, true) } catch {}
   }
 }
 

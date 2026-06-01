@@ -1,6 +1,7 @@
 package com.homelab.dashboard_backend.controller;
 
 import com.homelab.dashboard_backend.mapper.DashboardCardMapper;
+import com.homelab.dashboard_backend.service.DashboardEditingService;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -11,9 +12,11 @@ import java.util.Map;
 public class DashboardController {
 
     private final DashboardCardMapper cardMapper;
+    private final DashboardEditingService editingService;
 
-    public DashboardController(DashboardCardMapper cardMapper) {
+    public DashboardController(DashboardCardMapper cardMapper, DashboardEditingService editingService) {
         this.cardMapper = cardMapper;
+        this.editingService = editingService;
     }
 
     @GetMapping("/cards")
@@ -27,6 +30,9 @@ public class DashboardController {
         String template = (String) body.getOrDefault("template", "network-overview");
         @SuppressWarnings("unchecked")
         List<Map<String, Object>> cards = (List<Map<String, Object>>) body.get("cards");
+
+        // Save后退出编辑模式
+        editingService.stopEditing();
 
         // Clear existing cards for this template
         cardMapper.deleteByTemplate(template);
@@ -45,6 +51,22 @@ public class DashboardController {
                         .sortOrder(i)
                         .build());
             }
+        }
+        return "ok";
+    }
+
+    /**
+     * 进入/退出编辑模式
+     * PUT /dashboard/editing?template=network-overview&active=true
+     */
+    @PutMapping("/editing")
+    public String setEditing(
+            @RequestParam(defaultValue = "network-overview") String template,
+            @RequestParam boolean active) {
+        if (active) {
+            editingService.startEditing(template);
+        } else {
+            editingService.stopEditing();
         }
         return "ok";
     }

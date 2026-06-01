@@ -104,3 +104,16 @@ CREATE TABLE metric_snapshot (
     metrics_json  JSON                     COMMENT '标准化指标快照',
     INDEX idx_plugin_time (plugin_id, snapshot_time)
 ) ENGINE=InnoDB COMMENT='指标历史快照';
+
+-- -----------------------------------------------------------
+-- 7. 卡片指标映射表（每种卡片需要哪些指标，用于按需采集）
+-- -----------------------------------------------------------
+CREATE TABLE card_metric_mapping (
+    id            INT            AUTO_INCREMENT PRIMARY KEY,
+    card_type     VARCHAR(64)    NOT NULL  COMMENT '卡片类型（如 speed、wanStatus）',
+    metric_key    VARCHAR(128)   NOT NULL  COMMENT '指标 key，支持 * 通配（如 wan.*.upload）',
+    poll_freq     VARCHAR(16)    NOT NULL  DEFAULT 'realtime' COMMENT '采集频率：realtime / frequent / slow',
+    plugin_id     VARCHAR(32)    NOT NULL  COMMENT '所属插件（如 ikuai）',
+    created_at    DATETIME       DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY uk_card_metric (card_type, metric_key)
+) ENGINE=InnoDB COMMENT='卡片所需指标映射（用于按需采集和编辑模式全量返回）';

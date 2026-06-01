@@ -85,3 +85,39 @@ Sensitive configs are AES-256-GCM encrypted, key from `HOMELAB_SECRET_KEY` env v
 ## Project Status
 
 Currently in early development (Phase 1-2). The frontend has a default Vite scaffold; backend has Spring Boot skeleton with basic dependencies. See PRD.md for full feature roadmap.
+
+## Git Workflow
+
+### Remote Repositories
+- `origin` → https://git.lantech.top/Wjh/HomeLab-Dashboard.git (个人服务器)
+- `github` → https://github.com/thisRandom/HomeLab-Dashboard.git (GitHub)
+
+### Commit & Push Policy
+**重要：不要自动推送代码到远程仓库！**
+
+工作流程：
+1. 完成代码修改后，只在本地创建 commit
+2. 等待用户确认修改无误后，再执行 `git push`
+3. 用户确认后，同时推送到两个远程仓库：
+   ```bash
+   git push origin master && git push github master
+   ```
+
+### 本地提交规范
+```bash
+# 查看修改状态
+git status
+
+# 添加修改文件
+git add .
+
+# 创建本地提交（不推送）
+git commit -m "提交信息"
+
+# 等待用户确认后推送
+git push origin master && git push github master
+```
+
+### 分支管理
+- `master` — 主分支，稳定版本
+- 开发时可创建功能分支，完成后合并到 master

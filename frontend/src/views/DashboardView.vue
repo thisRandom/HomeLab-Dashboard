@@ -84,6 +84,11 @@ const pollingIntervals = ref({
   slow: 300000,
 })
 
+// 页面可见性控制
+const isPageVisible = ref(true)
+let lastHiddenTime: number | null = null
+const HIDDEN_THRESHOLD = 60000 // 60秒，超过这个时间需要全量刷新
+
 const cell = computed(() => {
   const w = containerW.value - (COLS - 1) * GAP
   return Math.floor(w / COLS)
@@ -167,6 +172,9 @@ async function fetchSlow() {
 }
 
 function startPolling() {
+  // 如果页面不可见，不启动轮询
+  if (!isPageVisible.value) return
+
   fetchRealtime()
   fetchFrequent()
   fetchSlow()
@@ -179,6 +187,31 @@ function stopPolling() {
   if (realtimeTimer) clearInterval(realtimeTimer)
   if (frequentTimer) clearInterval(frequentTimer)
   if (slowTimer) clearInterval(slowTimer)
+}
+
+// 页面可见性变化处理
+function handleVisibilityChange() {
+  if (document.hidden) {
+    // 页面不可见，暂停轮询
+    isPageVisible.value = false
+    lastHiddenTime = Date.now()
+    stopPolling()
+  } else {
+    // 页面重新可见
+    isPageVisible.value = true
+    const hiddenDuration = lastHiddenTime ? Date.now() - lastHiddenTime : 0
+    lastHiddenTime = null
+
+    // 如果离开时间较长，做一次全量数据加载
+    if (hiddenDuration > HIDDEN_THRESHOLD) {
+      fetchRealtime()
+      fetchFrequent()
+      fetchSlow()
+    }
+
+    // 恢复轮询
+    startPolling()
+  }
 }
 
 async function fetchPlugins() {
@@ -236,6 +269,7 @@ async function loadBackground() {
 
 onMounted(async () => {
   window.addEventListener('resize', measureContainer)
+  document.addEventListener('visibilitychange', handleVisibilityChange)
   loading.value = true
   try {
     const { data } = await getCards(TEMPLATE)
@@ -253,6 +287,7 @@ onMounted(async () => {
 
 onUnmounted(() => {
   window.removeEventListener('resize', measureContainer)
+  document.removeEventListener('visibilitychange', handleVisibilityChange)
   stopPolling()
 })
 

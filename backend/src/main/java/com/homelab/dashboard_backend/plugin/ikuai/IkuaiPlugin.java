@@ -171,6 +171,39 @@ public class IkuaiPlugin implements CollectorPlugin {
                     .type(MetricType.GAUGE)
                     .build());
         }
+
+        // WAN interface status + speed (realtime)
+        IkuaiClient.IfaceData ifaceData = client.fetchIfaceData();
+        if (ifaceData != null) {
+            for (IkuaiClient.IfaceCheck check : ifaceData.ifaceCheck) {
+                String ifaceName = check.iface != null ? check.iface : "wan" + check.id;
+                metrics.put("wan." + ifaceName + ".status", MetricValue.builder()
+                        .key("wan." + ifaceName + ".status")
+                        .value(check.internet != null ? check.internet : "unknown")
+                        .unit("")
+                        .displayName(ifaceName + " 状态")
+                        .type(MetricType.INFO)
+                        .build());
+            }
+
+            for (IkuaiClient.IfaceStream stream : ifaceData.ifaceStream) {
+                String ifaceName = stream.iface != null ? stream.iface : "wan";
+                metrics.put("wan." + ifaceName + ".upload", MetricValue.builder()
+                        .key("wan." + ifaceName + ".upload")
+                        .value(stream.upload)
+                        .unit("bps")
+                        .displayName(ifaceName + " 上行")
+                        .type(MetricType.GAUGE)
+                        .build());
+                metrics.put("wan." + ifaceName + ".download", MetricValue.builder()
+                        .key("wan." + ifaceName + ".download")
+                        .value(stream.download)
+                        .unit("bps")
+                        .displayName(ifaceName + " 下行")
+                        .type(MetricType.GAUGE)
+                        .build());
+            }
+        }
     }
 
     private void collectFrequent(Map<String, MetricValue> metrics) {
@@ -204,39 +237,6 @@ public class IkuaiPlugin implements CollectorPlugin {
                 .displayName("在线设备列表")
                 .type(MetricType.INFO)
                 .build());
-
-        // WAN interface status
-        IkuaiClient.IfaceData ifaceData = client.fetchIfaceData();
-        if (ifaceData != null) {
-            for (IkuaiClient.IfaceCheck check : ifaceData.ifaceCheck) {
-                String ifaceName = check.iface != null ? check.iface : "wan" + check.id;
-                metrics.put("wan." + ifaceName + ".status", MetricValue.builder()
-                        .key("wan." + ifaceName + ".status")
-                        .value(check.internet != null ? check.internet : "unknown")
-                        .unit("")
-                        .displayName(ifaceName + " 状态")
-                        .type(MetricType.INFO)
-                        .build());
-            }
-
-            for (IkuaiClient.IfaceStream stream : ifaceData.ifaceStream) {
-                String ifaceName = stream.iface != null ? stream.iface : "wan";
-                metrics.put("wan." + ifaceName + ".upload", MetricValue.builder()
-                        .key("wan." + ifaceName + ".upload")
-                        .value(stream.upload)
-                        .unit("bps")
-                        .displayName(ifaceName + " 上行")
-                        .type(MetricType.GAUGE)
-                        .build());
-                metrics.put("wan." + ifaceName + ".download", MetricValue.builder()
-                        .key("wan." + ifaceName + ".download")
-                        .value(stream.download)
-                        .unit("bps")
-                        .displayName(ifaceName + " 下行")
-                        .type(MetricType.GAUGE)
-                        .build());
-            }
-        }
     }
 
     private void collectSlow(Map<String, MetricValue> metrics) {

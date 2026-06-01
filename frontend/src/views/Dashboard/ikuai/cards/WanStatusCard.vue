@@ -23,7 +23,7 @@ const ifaces = computed<WanIface[]>(() => {
 
   for (const [key, mv] of Object.entries(props.metrics)) {
     if (!key.startsWith('wan.')) continue
-    const rest = key.slice(4) // "wan1.status"
+    const rest = key.slice(4)
     const dotIdx = rest.lastIndexOf('.')
     if (dotIdx === -1) continue
     const ifaceName = rest.substring(0, dotIdx)
@@ -49,27 +49,23 @@ const ifaces = computed<WanIface[]>(() => {
 const onlineCount = computed(() => ifaces.value.filter(i => isOnline(i)).length)
 
 function isOnline(iface: WanIface): boolean {
-  // WAN 口有 status 字段：DHCP/STATIC/PPPoE 表示已连接
   if (iface.status !== 'unknown') {
     const s = iface.status.toLowerCase()
     return s !== 'down' && s !== 'offline' && s !== 'none' && s !== ''
   }
-  // LAN 口没有 status 字段，有速率数据就视为在线
   return iface.upload > 0 || iface.download > 0
 }
 
-function splitSpeed(bps: number): { num: string; unit: string } {
-  if (bps === 0) return { num: '--', unit: '' }
-  if (bps < 1024) return { num: String(bps), unit: 'bps' }
-  if (bps < 1048576) return { num: (bps / 1024).toFixed(1), unit: 'KB/s' }
-  if (bps < 1073741824) return { num: (bps / 1048576).toFixed(2), unit: 'MB/s' }
-  return { num: (bps / 1073741824).toFixed(2), unit: 'GB/s' }
+function formatSpeed(bps: number): string {
+  if (bps === 0) return '--'
+  if (bps < 1024) return bps + ''
+  if (bps < 1048576) return (bps / 1024).toFixed(1) + 'K'
+  return (bps / 1048576).toFixed(1) + 'M'
 }
 </script>
 
 <template>
   <div class="wan-card">
-    <!-- Summary bar -->
     <div class="wan-summary">
       <span class="wan-summary-label" :style="{ color: textSec }">接口</span>
       <span class="wan-summary-count" :style="{ color: onlineCount > 0 ? '#36D399' : '#FF6B6B' }">
@@ -77,7 +73,6 @@ function splitSpeed(bps: number): { num: string; unit: string } {
       </span>
     </div>
 
-    <!-- WAN interface list -->
     <div class="wan-list">
       <div
         v-for="iface in ifaces"
@@ -85,45 +80,37 @@ function splitSpeed(bps: number): { num: string; unit: string } {
         class="wan-item"
         :style="{ background: bgColor, border: `1px solid ${borderColor}` }"
       >
-        <!-- Name + status dot -->
         <div class="wan-item-header">
           <span class="wan-name" :style="{ color: textColor }">{{ iface.name }}</span>
-          <span
-            class="wan-dot"
-            :class="{ 'wan-dot--online': isOnline(iface) }"
-          />
+          <span class="wan-dot" :class="{ 'wan-dot--online': isOnline(iface) }" />
         </div>
 
-        <!-- Speeds -->
         <div class="wan-speeds">
           <div class="wan-speed-row">
             <span class="wan-arrow" style="color:#6C8EFF;">↑</span>
             <FlipText
-              :text="splitSpeed(iface.upload).num"
+              :text="formatSpeed(iface.upload)"
               :color="textColor"
               :font-size="12"
               :font-weight="600"
               font-family="'SF Mono', 'Cascadia Code', 'JetBrains Mono', 'Menlo', monospace"
-              min-width="3ch"
+              min-width="5ch"
             />
-            <span class="wan-unit" :style="{ color: textTer }">{{ splitSpeed(iface.upload).unit }}</span>
           </div>
           <div class="wan-speed-row">
             <span class="wan-arrow" style="color:#2DD4BF;">↓</span>
             <FlipText
-              :text="splitSpeed(iface.download).num"
+              :text="formatSpeed(iface.download)"
               :color="textColor"
               :font-size="12"
               :font-weight="600"
               font-family="'SF Mono', 'Cascadia Code', 'JetBrains Mono', 'Menlo', monospace"
-              min-width="3ch"
+              min-width="5ch"
             />
-            <span class="wan-unit" :style="{ color: textTer }">{{ splitSpeed(iface.download).unit }}</span>
           </div>
         </div>
       </div>
 
-      <!-- Empty state -->
       <div v-if="ifaces.length === 0" class="wan-empty">
         <span :style="{ color: textTer }">采集中...</span>
       </div>
@@ -218,11 +205,5 @@ function splitSpeed(bps: number): { num: string; unit: string } {
 .wan-arrow {
   font-size: 11px;
   flex-shrink: 0;
-}
-
-.wan-unit {
-  font-size: 10px;
-  font-family: 'SF Mono', 'Cascadia Code', 'JetBrains Mono', 'Menlo', monospace;
-  margin-left: auto;
 }
 </style>

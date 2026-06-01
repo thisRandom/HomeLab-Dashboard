@@ -1,0 +1,46 @@
+# Dependencies
+node_modules/
+pom.xml.versionsBackup
+
+# Build outputs
+frontend/dist/
+backend/target/
+*.class
+*.jar
+*.war
+
+# IDE files
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Logs
+*.log
+logs/
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Maven
+backend/.mvn/wrapper/maven-wrapper.jar
+
+# Frontend
+frontend/dist-ssr/
+frontend/.env.local
+frontend/.env.*.local
+
+# Backend
+backend/.settings/
+backend/.classpath
+backend/.project
+
+# Subprojects (separate repos)
+ikuai-aio/

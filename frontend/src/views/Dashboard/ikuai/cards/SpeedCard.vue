@@ -30,52 +30,42 @@ const downSpeed = computed(() => splitSpeed(downVal.value))
 </script>
 
 <template>
-  <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;padding:8px;gap:16px;">
-    <!-- Upload -->
-    <div style="display:flex;flex-direction:column;align-items:center;gap:2px;">
-      <span style="color:#6C8EFF;font-size:14px;">↑</span>
-      <div style="display:flex;align-items:baseline;">
-        <FlipText
-          :text="upSpeed.num"
-          :color="textColor"
-          :font-size="18"
-          :font-weight="700"
-          font-family="'SF Mono', 'Cascadia Code', 'JetBrains Mono', 'Menlo', monospace"
-          min-width="4ch"
-        />
-        <FlipText
-          :text="upSpeed.unit"
-          :color="textSec"
-          :font-size="10"
-          min-width="3ch"
-          style="margin-left:2px;"
-        />
-      </div>
+  <div style="display:flex;flex-direction:column;align-items:flex-start;justify-content:center;height:100%;padding:4px 8px;gap:4px;">
+    <div style="display:flex;align-items:baseline;">
+      <span style="color:#6C8EFF;font-size:12px;margin-right:4px;">↑</span>
+      <FlipText
+        :text="upSpeed.num"
+        :color="textColor"
+        :font-size="18"
+        :font-weight="700"
+        font-family="'SF Mono', 'Cascadia Code', 'JetBrains Mono', 'Menlo', monospace"
+        min-width="4ch"
+      />
+      <FlipText
+        :text="upSpeed.unit"
+        :color="textSec"
+        :font-size="11"
+        min-width="4ch"
+        style="margin-left:2px;"
+      />
     </div>
-
-    <!-- Divider -->
-    <div style="width:40px;height:1px;background:rgba(255,255,255,0.08);"></div>
-
-    <!-- Download -->
-    <div style="display:flex;flex-direction:column;align-items:center;gap:2px;">
-      <span style="color:#2DD4BF;font-size:14px;">↓</span>
-      <div style="display:flex;align-items:baseline;">
-        <FlipText
-          :text="downSpeed.num"
-          :color="textColor"
-          :font-size="18"
-          :font-weight="700"
-          font-family="'SF Mono', 'Cascadia Code', 'JetBrains Mono', 'Menlo', monospace"
-          min-width="4ch"
-        />
-        <FlipText
-          :text="downSpeed.unit"
-          :color="textSec"
-          :font-size="10"
-          min-width="3ch"
-          style="margin-left:2px;"
-        />
-      </div>
+    <div style="display:flex;align-items:baseline;padding-left:10px;">
+      <span style="color:#2DD4BF;font-size:12px;margin-right:4px;">↓</span>
+      <FlipText
+        :text="downSpeed.num"
+        :color="textColor"
+        :font-size="18"
+        :font-weight="700"
+        font-family="'SF Mono', 'Cascadia Code', 'JetBrains Mono', 'Menlo', monospace"
+        min-width="4ch"
+      />
+      <FlipText
+        :text="downSpeed.unit"
+        :color="textSec"
+        :font-size="11"
+        min-width="4ch"
+        style="margin-left:2px;"
+      />
     </div>
   </div>
 </template>

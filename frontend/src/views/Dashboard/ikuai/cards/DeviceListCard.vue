@@ -51,23 +51,79 @@ const devices = computed<Device[]>(() => {
 })
 </script>
 
+<style scoped>
+.device-item-enter-active {
+  animation: slideIn 0.3s ease-out;
+}
+
+.device-item-leave-active {
+  animation: slideOut 0.3s ease-in;
+  position: absolute;
+  width: 100%;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+    max-height: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+    margin-bottom: 0;
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+    max-height: 60px;
+    padding-top: 6px;
+    padding-bottom: 6px;
+    margin-bottom: 0;
+  }
+}
+
+@keyframes slideOut {
+  from {
+    opacity: 1;
+    transform: translateX(0);
+    max-height: 60px;
+    padding-top: 6px;
+    padding-bottom: 6px;
+  }
+  to {
+    opacity: 0;
+    transform: translateX(20px);
+    max-height: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+  }
+}
+
+/* 列表容器需要 relative 定位以支持绝对定位的退出动画 */
+.device-list {
+  position: relative;
+}
+</style>
+
 <template>
   <div style="display:flex;flex-direction:column;width:100%;height:100%;padding:12px;gap:8px;">
     <!-- Header -->
     <div style="display:flex;align-items:center;justify-content:space-between;">
       <span style="font-size:13px;font-weight:600;" :style="{ color: textColor }">在线用户</span>
+      <span style="font-size:11px;font-family:'SF Mono','Cascadia Code','JetBrains Mono','Menlo',monospace;" :style="{ color: textSec }">{{ devices.length }}</span>
     </div>
     <!-- Device list -->
-    <div style="flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;display:flex;flex-direction:column;gap:4px;" :style="{ '::-webkit-scrollbar': { width: '3px' }, '::-webkit-scrollbar-thumb': { background: 'rgba(255,255,255,0.1)', borderRadius: '2px' } }">
-      <div
-        v-for="device in devices"
-        :key="device.name"
-        style="padding:6px 8px;border-radius:6px;"
-        :style="{ background: bgColor }"
-      >
-        <div style="font-size:12px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" :style="{ color: textColor }">{{ device.name }}</div>
-        <div style="font-size:10px;margin-top:2px;font-family:'SF Mono','Cascadia Code','JetBrains Mono','Menlo',monospace;" :style="{ color: accentBlue }">{{ device.ip }}</div>
-      </div>
+    <div class="device-list" style="flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;display:flex;flex-direction:column;gap:4px;" :style="{ '::-webkit-scrollbar': { width: '3px' }, '::-webkit-scrollbar-thumb': { background: 'rgba(255,255,255,0.1)', borderRadius: '2px' } }">
+      <TransitionGroup name="device-item">
+        <div
+          v-for="device in devices"
+          :key="device.name"
+          style="padding:6px 8px;border-radius:6px;"
+          :style="{ background: bgColor }"
+        >
+          <div style="font-size:12px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" :style="{ color: textColor }">{{ device.name }}</div>
+          <div style="font-size:10px;margin-top:2px;font-family:'SF Mono','Cascadia Code','JetBrains Mono','Menlo',monospace;" :style="{ color: accentBlue }">{{ device.ip }}</div>
+        </div>
+      </TransitionGroup>
       <div v-if="devices.length === 0" style="flex:1;display:flex;align-items:center;justify-content:center;">
         <span style="font-size:11px;" :style="{ color: textTer }">采集中...</span>
       </div>

@@ -46,15 +46,16 @@ const ifaces = computed<WanIface[]>(() => {
   return Array.from(map.values())
 })
 
-const onlineCount = computed(() => ifaces.value.filter(i => i.status === 'online').length)
+const onlineCount = computed(() => ifaces.value.filter(i => isOnline(i)).length)
 
-const deviceCount = computed(() => {
-  const v = props.metrics['lan.device_count']?.value
-  return typeof v === 'number' ? v : 0
-})
-
-function isOnline(status: string): boolean {
-  return status === 'online'
+function isOnline(iface: WanIface): boolean {
+  // WAN 口有 status 字段：DHCP/STATIC/PPPoE 表示已连接
+  if (iface.status !== 'unknown') {
+    const s = iface.status.toLowerCase()
+    return s !== 'down' && s !== 'offline' && s !== 'none' && s !== ''
+  }
+  // LAN 口没有 status 字段，有速率数据就视为在线
+  return iface.upload > 0 || iface.download > 0
 }
 
 function splitSpeed(bps: number): { num: string; unit: string } {
@@ -70,7 +71,7 @@ function splitSpeed(bps: number): { num: string; unit: string } {
   <div class="wan-card">
     <!-- Summary bar -->
     <div class="wan-summary">
-      <span class="wan-summary-label" :style="{ color: textSec }">WAN 口</span>
+      <span class="wan-summary-label" :style="{ color: textSec }">接口</span>
       <span class="wan-summary-count" :style="{ color: onlineCount > 0 ? '#36D399' : '#FF6B6B' }">
         {{ onlineCount }}/{{ ifaces.length }}
       </span>
@@ -89,7 +90,7 @@ function splitSpeed(bps: number): { num: string; unit: string } {
           <span class="wan-name" :style="{ color: textColor }">{{ iface.name }}</span>
           <span
             class="wan-dot"
-            :class="{ 'wan-dot--online': isOnline(iface.status) }"
+            :class="{ 'wan-dot--online': isOnline(iface) }"
           />
         </div>
 
@@ -126,12 +127,6 @@ function splitSpeed(bps: number): { num: string; unit: string } {
       <div v-if="ifaces.length === 0" class="wan-empty">
         <span :style="{ color: textTer }">采集中...</span>
       </div>
-    </div>
-
-    <!-- LAN summary -->
-    <div class="lan-bar" :style="{ background: bgColor, border: `1px solid ${borderColor}` }">
-      <span class="lan-label" :style="{ color: textSec }">LAN</span>
-      <span class="lan-count" :style="{ color: textColor }">{{ deviceCount }}<span class="lan-unit" :style="{ color: textTer }"> 台</span></span>
     </div>
   </div>
 </template>
@@ -171,7 +166,6 @@ function splitSpeed(bps: number): { num: string; unit: string } {
   display: flex;
   flex-direction: column;
   gap: 5px;
-  overflow-y: auto;
 }
 
 .wan-item {
@@ -230,32 +224,5 @@ function splitSpeed(bps: number): { num: string; unit: string } {
   font-size: 10px;
   font-family: 'SF Mono', 'Cascadia Code', 'JetBrains Mono', 'Menlo', monospace;
   margin-left: auto;
-}
-
-.lan-bar {
-  flex-shrink: 0;
-  border-radius: 8px;
-  padding: 6px 10px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.lan-label {
-  font-size: 11px;
-  font-weight: 500;
-  font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif;
-}
-
-.lan-count {
-  font-size: 14px;
-  font-weight: 700;
-  font-family: 'SF Mono', 'Cascadia Code', 'JetBrains Mono', 'Menlo', monospace;
-}
-
-.lan-unit {
-  font-size: 11px;
-  font-weight: 400;
-  margin-left: 1px;
 }
 </style>

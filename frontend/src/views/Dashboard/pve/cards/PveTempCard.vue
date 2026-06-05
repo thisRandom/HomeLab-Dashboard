@@ -12,7 +12,7 @@ const timeLabels = ref<string[]>([])
 
 // 当前温度
 const temp = computed(() => {
-  const v = props.metrics['cpu.temp']?.value
+  const v = props.metrics['pve.cpu.temp']?.value
   return typeof v === 'number' ? v : 0
 })
 

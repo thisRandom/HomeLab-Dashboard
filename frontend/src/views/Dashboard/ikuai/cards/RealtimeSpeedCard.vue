@@ -96,11 +96,16 @@ function percentGauge(value: number, color: string, label: string) {
         offsetCenter: [0, '-10%'],
         itemStyle: { color },
       },
-      progress: { show: false },
+      progress: {
+        show: true,
+        width: 10,
+        roundCap: true,
+        itemStyle: { color },
+      },
       axisLine: {
         lineStyle: {
           width: 10,
-          color: [[ratio, color], [1, 'rgba(255,255,255,0.06)']],
+          color: [[1, 'rgba(255,255,255,0.06)']],
         },
       },
       axisTick: { show: false },
@@ -116,6 +121,9 @@ function percentGauge(value: number, color: string, label: string) {
       },
       title: { show: false },
       data: [{ value: ratio }],
+      animationDuration: 800,
+      animationDurationUpdate: 800,
+      animationEasingUpdate: 'cubicInOut',
     }],
   }
 }

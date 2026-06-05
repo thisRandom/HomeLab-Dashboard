@@ -92,7 +92,8 @@ INSERT INTO card_metric_mapping (card_type, metric_key, poll_freq, plugin_id) VA
 ('pveNodeStatus',  'pve.loadavg.1',          'realtime', 'pve'),
 ('pveNodeStatus',  'pve.loadavg.5',          'realtime', 'pve'),
 ('pveNodeStatus',  'pve.loadavg.15',         'realtime', 'pve'),
-('pveTempCard',    'cpu.temp',               'realtime', 'pve')
+('pveTempCard',    'pve.cpu.temp',           'realtime', 'pve'),
+('pveTemperature', 'pve.cpu.temp',           'realtime', 'pve')
 ON DUPLICATE KEY UPDATE poll_freq = VALUES(poll_freq);
 
 -- frequent 卡片（中频轮询）

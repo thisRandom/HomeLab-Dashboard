@@ -50,6 +50,10 @@ public class PveClient {
 
     private final HttpClient httpClient;
 
+    // SSH 长连接
+    private Session sshSession;
+    private final Object sshLock = new Object();
+
     public PveClient(String host, int port, String nodeName, String apiToken,
                      String sshHost, int sshPort, String sshUser, String sshPassword, String sshKeyPath) {
         this.baseUrl = String.format("https://%s:%d/api2/json", host, port);
@@ -178,60 +182,91 @@ public class PveClient {
     }
 
     /**
-     * 通过 SSH 在 PVE 节点上执行命令
+     * 建立 SSH 长连接（在 initialize 时调用一次）
+     */
+    public void connectSsh() {
+        if (sshHost == null || sshHost.isEmpty()) return;
+        synchronized (sshLock) {
+            if (sshSession != null && sshSession.isConnected()) return;
+            try {
+                JSch jsch = new JSch();
+                if (sshKeyPath != null && !sshKeyPath.isEmpty()) {
+                    jsch.addIdentity(sshKeyPath);
+                }
+                sshSession = jsch.getSession(sshUser != null ? sshUser : "root", sshHost, sshPort);
+                sshSession.setServerAliveInterval(5000);
+                sshSession.setServerAliveCountMax(3);
+                if (sshPassword != null && !sshPassword.isEmpty()) {
+                    sshSession.setPassword(sshPassword);
+                }
+                Properties config = new Properties();
+                config.put("StrictHostKeyChecking", "no");
+                sshSession.setConfig(config);
+                sshSession.connect(5000);
+                log.info("SSH connected to {}:{}", sshHost, sshPort);
+            } catch (Exception e) {
+                log.warn("SSH connect failed to {}:{} - {}", sshHost, sshPort, e.getMessage());
+                sshSession = null;
+            }
+        }
+    }
+
+    /**
+     * 断开 SSH 长连接（在 destroy 时调用）
+     */
+    public void disconnectSsh() {
+        synchronized (sshLock) {
+            if (sshSession != null) {
+                if (sshSession.isConnected()) {
+                    sshSession.disconnect();
+                    log.info("SSH disconnected from {}:{}", sshHost, sshPort);
+                }
+                sshSession = null;
+            }
+        }
+    }
+
+    /**
+     * 通过 SSH 在 PVE 节点上执行命令（复用长连接）
      * 返回命令输出文本，失败返回 null
      */
     public String sshExecute(String command) {
         if (sshHost == null || sshHost.isEmpty()) return null;
 
-        Session session = null;
-        try {
-            JSch jsch = new JSch();
+        synchronized (sshLock) {
+            try {
+                // 连接不存在或已断开，自动重连
+                if (sshSession == null || !sshSession.isConnected()) {
+                    log.info("SSH session lost, reconnecting...");
+                    disconnectSsh();
+                    connectSsh();
+                    if (sshSession == null || !sshSession.isConnected()) {
+                        return null;
+                    }
+                }
 
-            // 加载私钥（如果配置了）
-            if (sshKeyPath != null && !sshKeyPath.isEmpty()) {
-                jsch.addIdentity(sshKeyPath);
-            }
+                ChannelExec channel = (ChannelExec) sshSession.openChannel("exec");
+                channel.setCommand(command);
+                channel.setInputStream(null);
+                channel.setErrStream(null);
 
-            session = jsch.getSession(sshUser != null ? sshUser : "root", sshHost, sshPort);
-            session.setServerAliveInterval(5000);
-            session.setServerAliveCountMax(2);
+                java.io.InputStream in = channel.getInputStream();
+                channel.connect(3000);
 
-            // 设置密码（如果有）
-            if (sshPassword != null && !sshPassword.isEmpty()) {
-                session.setPassword(sshPassword);
-            }
+                StringBuilder output = new StringBuilder();
+                byte[] buffer = new byte[1024];
+                int len;
+                while ((len = in.read(buffer)) > 0) {
+                    output.append(new String(buffer, 0, len));
+                }
 
-            // 跳过 known_hosts 检查（家庭网络环境）
-            Properties config = new Properties();
-            config.put("StrictHostKeyChecking", "no");
-            session.setConfig(config);
-
-            session.connect(5000);
-
-            ChannelExec channel = (ChannelExec) session.openChannel("exec");
-            channel.setCommand(command);
-            channel.setInputStream(null);
-            channel.setErrStream(null);
-
-            java.io.InputStream in = channel.getInputStream();
-            channel.connect(3000);
-
-            StringBuilder output = new StringBuilder();
-            byte[] buffer = new byte[1024];
-            int len;
-            while ((len = in.read(buffer)) > 0) {
-                output.append(new String(buffer, 0, len));
-            }
-
-            channel.disconnect();
-            return output.toString().trim();
-        } catch (Exception e) {
-            log.warn("SSH execute failed on {}: {} - {}", sshHost, command, e.getMessage());
-            return null;
-        } finally {
-            if (session != null && session.isConnected()) {
-                session.disconnect();
+                channel.disconnect();
+                return output.toString().trim();
+            } catch (Exception e) {
+                log.warn("SSH execute failed on {}: {} - {}", sshHost, command, e.getMessage());
+                // 连接异常时断开，下次调用会自动重连
+                disconnectSsh();
+                return null;
             }
         }
     }

@@ -22,6 +22,7 @@ import PveNodeStatusCard from './Dashboard/pve/cards/PveNodeStatusCard.vue'
 import PveVmListCard from './Dashboard/pve/cards/PveVmListCard.vue'
 import PveNodeInfoCard from './Dashboard/pve/cards/PveNodeInfoCard.vue'
 import PveTempCard from './Dashboard/pve/cards/PveTempCard.vue'
+import PveTemperatureCard from './Dashboard/pve/cards/PveTemperatureCard.vue'
 
 const COLS = 12
 const GAP = 2
@@ -66,6 +67,7 @@ const cardDefs: CardDef[] = [
   { type: 'pveVmList', title: 'PVE 虚拟机', icon: '📦', w: 2, h: 3, freq: 'frequent', pluginId: 'pve', component: markRaw(PveVmListCard) },
   { type: 'pveNodeInfo', title: 'PVE 节点信息', icon: '🖧', w: 2, h: 1, freq: 'slow', pluginId: 'pve', component: markRaw(PveNodeInfoCard) },
   { type: 'pveTempCard', title: 'PVE CPU温度', icon: '🌡️', w: 2, h: 2, freq: 'realtime', pluginId: 'pve', component: markRaw(PveTempCard) },
+  { type: 'pveTemperature', title: 'PVE CPU温度', icon: '🌡️', w: 1, h: 1, freq: 'realtime', pluginId: 'pve', component: markRaw(PveTemperatureCard) },
 ]
 
 const editing = ref(false)

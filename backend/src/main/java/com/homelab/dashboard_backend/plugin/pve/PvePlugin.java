@@ -149,6 +149,8 @@ public class PvePlugin implements CollectorPlugin {
             log.error("Failed to initialize PVE plugin - connection test failed");
         } else {
             log.info("PVE plugin initialized: {}:{} node={}", host, port, node);
+            // 建立 SSH 长连接
+            client.connectSsh();
             // 测试 SSH 温度读取
             String tempTest = client.sshExecute("sensors 2>/dev/null | head -1 || echo 'no sensors'");
             log.info("PVE SSH temperature test: {}", tempTest);
@@ -273,8 +275,8 @@ public class PvePlugin implements CollectorPlugin {
             // 解析 sensors 输出，如 "Core 0:        +45.0°C" 或 "temp1:        +42.0°C"
             double temp = parseSensorTemp(tempOutput);
             if (temp > 0) {
-                metrics.put("cpu.temp", MetricValue.builder()
-                        .key("cpu.temp")
+                metrics.put("pve.cpu.temp", MetricValue.builder()
+                        .key("pve.cpu.temp")
                         .value(temp)
                         .unit("°C")
                         .displayName("CPU 温度")
@@ -501,6 +503,9 @@ public class PvePlugin implements CollectorPlugin {
     @Override
     public void destroy() {
         healthy = false;
+        if (client != null) {
+            client.disconnectSsh();
+        }
         client = null;
         log.info("PVE plugin destroyed");
     }

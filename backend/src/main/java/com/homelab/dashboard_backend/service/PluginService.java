@@ -4,6 +4,7 @@ import com.homelab.dashboard_backend.mapper.PluginConfigMapper;
 import com.homelab.dashboard_backend.mapper.PluginMapper;
 import com.homelab.dashboard_backend.plugin.CollectorPlugin;
 import com.homelab.dashboard_backend.plugin.ikuai.IkuaiPlugin;
+import com.homelab.dashboard_backend.plugin.pve.PvePlugin;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -62,6 +63,7 @@ public class PluginService {
     private CollectorPlugin createPlugin(String pluginId) {
         switch (pluginId) {
             case "ikuai": return createIkuai();
+            case "pve": return createPve();
             default:
                 log.warn("Unknown plugin: {}", pluginId);
                 return null;
@@ -83,6 +85,24 @@ public class PluginService {
         plugin.initialize(config);
 
         pluginMapper.setStatus("ikuai", plugin.isHealthy() ? "online" : "error");
+        return plugin;
+    }
+
+    private PvePlugin createPve() {
+        List<Map<String, String>> rows = pluginConfigMapper.selectByPluginId("pve");
+        Map<String, String> config = new HashMap<>();
+        for (Map<String, String> row : rows) {
+            config.put(row.get("config_key"), row.get("config_value"));
+        }
+        if (config.isEmpty()) {
+            log.error("No config found for pve plugin in database, please run sql/pve.sql first");
+            return null;
+        }
+
+        PvePlugin plugin = new PvePlugin();
+        plugin.initialize(config);
+
+        pluginMapper.setStatus("pve", plugin.isHealthy() ? "online" : "error");
         return plugin;
     }
 
@@ -196,9 +216,17 @@ public class PluginService {
     private CollectorPlugin createPluginWithoutLogin(String pluginId) {
         switch (pluginId) {
             case "ikuai": return new IkuaiPlugin();
+            case "pve": return new PvePlugin();
             default:
                 log.warn("Unknown plugin: {}", pluginId);
                 return null;
         }
+    }
+
+    /**
+     * 创建插件实例（不登录），仅用于获取 configSchema
+     */
+    public CollectorPlugin createPluginWithoutLoginForSchema(String pluginId) {
+        return createPluginWithoutLogin(pluginId);
     }
 }

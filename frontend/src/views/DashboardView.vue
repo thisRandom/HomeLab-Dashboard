@@ -18,6 +18,10 @@ import CpuTempCard from './Dashboard/ikuai/cards/CpuTempCard.vue'
 import UptimeCard from './Dashboard/ikuai/cards/UptimeCard.vue'
 import SystemOverviewCard from './Dashboard/ikuai/cards/SystemOverviewCard.vue'
 import DeviceTrafficCard from './Dashboard/ikuai/cards/DeviceTrafficCard.vue'
+import PveNodeStatusCard from './Dashboard/pve/cards/PveNodeStatusCard.vue'
+import PveVmListCard from './Dashboard/pve/cards/PveVmListCard.vue'
+import PveNodeInfoCard from './Dashboard/pve/cards/PveNodeInfoCard.vue'
+import PveTempCard from './Dashboard/pve/cards/PveTempCard.vue'
 
 const COLS = 12
 const GAP = 2
@@ -57,6 +61,11 @@ const cardDefs: CardDef[] = [
   { type: 'realtimeSpeed', title: '实时速率', icon: '⚡', w: 3, h: 2, freq: 'realtime', pluginId: 'ikuai', component: markRaw(RealtimeSpeedCard) },
   { type: 'deviceList', title: '在线用户', icon: '📱', w: 2, h: 3, freq: 'slow', pluginId: 'ikuai', component: markRaw(DeviceListCard) },
   { type: 'deviceTraffic', title: '设备流量', icon: '📊', w: 2, h: 2, freq: 'realtime', pluginId: 'ikuai', component: markRaw(DeviceTrafficCard) },
+  // PVE cards
+  { type: 'pveNodeStatus', title: 'PVE 节点状态', icon: '🖥️', w: 2, h: 1, freq: 'realtime', pluginId: 'pve', component: markRaw(PveNodeStatusCard) },
+  { type: 'pveVmList', title: 'PVE 虚拟机', icon: '📦', w: 2, h: 3, freq: 'frequent', pluginId: 'pve', component: markRaw(PveVmListCard) },
+  { type: 'pveNodeInfo', title: 'PVE 节点信息', icon: '🖧', w: 2, h: 1, freq: 'slow', pluginId: 'pve', component: markRaw(PveNodeInfoCard) },
+  { type: 'pveTempCard', title: 'PVE CPU温度', icon: '🌡️', w: 2, h: 2, freq: 'realtime', pluginId: 'pve', component: markRaw(PveTempCard) },
 ]
 
 const editing = ref(false)
@@ -177,9 +186,11 @@ function startPolling() {
   // 如果页面不可见，不启动轮询
   if (!isPageVisible.value) return
 
+  // 首次加载错开请求，避免服务器压力过大
   fetchRealtime()
-  fetchFrequent()
-  fetchSlow()
+  setTimeout(() => fetchFrequent(), 300)
+  setTimeout(() => fetchSlow(), 600)
+
   realtimeTimer = setInterval(fetchRealtime, pollingIntervals.value.realtime)
   frequentTimer = setInterval(fetchFrequent, pollingIntervals.value.frequent)
   slowTimer = setInterval(fetchSlow, pollingIntervals.value.slow)
@@ -204,11 +215,11 @@ function handleVisibilityChange() {
     const hiddenDuration = lastHiddenTime ? Date.now() - lastHiddenTime : 0
     lastHiddenTime = null
 
-    // 如果离开时间较长，做一次全量数据加载
+    // 如果离开时间较长，做一次全量数据加载（错开请求）
     if (hiddenDuration > HIDDEN_THRESHOLD) {
       fetchRealtime()
-      fetchFrequent()
-      fetchSlow()
+      setTimeout(() => fetchFrequent(), 300)
+      setTimeout(() => fetchSlow(), 600)
     }
 
     // 恢复轮询
@@ -663,6 +674,25 @@ function openPicker() {
   box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.8);
 }
 .theme-light .dashboard--editing .grid-card { border: 1px dashed rgba(60, 120, 200, 0.4); }
+.theme-light .picker-overlay { background: rgba(0, 0, 0, 0.4); }
+.theme-light .picker-panel {
+  --picker-bg: rgba(255, 255, 255, 0.95);
+  --picker-border: rgba(0, 0, 0, 0.1);
+  --picker-btn-bg: rgba(0, 0, 0, 0.06);
+  --picker-btn-color: rgba(30, 30, 40, 0.6);
+  --picker-btn-hover-bg: rgba(0, 0, 0, 0.1);
+  --picker-btn-hover-color: rgba(30, 30, 40, 0.9);
+  --picker-tab-color: rgba(30, 30, 40, 0.5);
+  --picker-tab-hover-color: rgba(30, 30, 40, 0.8);
+  --picker-tab-active-color: rgba(60, 120, 200, 0.95);
+  --picker-tab-count-color: rgba(30, 30, 40, 0.3);
+  --picker-item-border: rgba(0, 0, 0, 0.08);
+  --picker-item-bg: rgba(0, 0, 0, 0.02);
+  --picker-title-color: rgba(30, 30, 40, 0.75);
+  --picker-size-color: rgba(30, 30, 40, 0.3);
+  --picker-empty-color: rgba(30, 30, 40, 0.35);
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.15);
+}
 
 .card-remove {
   position: absolute; top: 6px; right: 6px; z-index: 10;
@@ -684,8 +714,8 @@ function openPicker() {
   z-index: 200;
 }
 .picker-panel {
-  background: rgba(25, 25, 30, 0.95);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: var(--picker-bg, rgba(25, 25, 30, 0.95));
+  border: 1px solid var(--picker-border, rgba(255, 255, 255, 0.1));
   border-radius: 16px; width: calc(8 / 12 * (100vw - 48px)); max-height: 92vh;
   overflow: hidden; display: flex; flex-direction: column; position: relative;
   box-sizing: border-box;
@@ -694,25 +724,26 @@ function openPicker() {
 .picker-close {
   position: absolute; top: 12px; right: 12px; z-index: 10;
   width: 28px; height: 28px; border-radius: 50%; border: none;
-  background: rgba(255, 255, 255, 0.1); color: rgba(255, 255, 255, 0.7);
+  background: var(--picker-btn-bg, rgba(255, 255, 255, 0.1));
+  color: var(--picker-btn-color, rgba(255, 255, 255, 0.7));
   font-size: 16px; cursor: pointer; display: flex; align-items: center;
   justify-content: center; padding: 0; transition: all 0.2s;
 }
-.picker-close:hover { background: rgba(255, 255, 255, 0.18); color: #fff; }
+.picker-close:hover { background: var(--picker-btn-hover-bg, rgba(255, 255, 255, 0.18)); color: var(--picker-btn-hover-color, #fff); }
 
 .picker-tabs {
   display: flex; gap: 0; padding: 0 20px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid var(--picker-border, rgba(255, 255, 255, 0.08));
 }
 .picker-tab {
   padding: 10px 16px; font-size: 13px; font-weight: 500;
-  color: rgba(255, 255, 255, 0.5); background: none; border: none;
+  color: var(--picker-tab-color, rgba(255, 255, 255, 0.5)); background: none; border: none;
   cursor: pointer; position: relative; transition: color 0.2s;
   font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif;
 }
-.picker-tab:hover { color: rgba(255, 255, 255, 0.8); }
+.picker-tab:hover { color: var(--picker-tab-hover-color, rgba(255, 255, 255, 0.8)); }
 .picker-tab--active {
-  color: rgba(100, 160, 255, 0.95);
+  color: var(--picker-tab-active-color, rgba(100, 160, 255, 0.95));
 }
 .picker-tab--active::after {
   content: ''; position: absolute; bottom: -1px; left: 16px; right: 16px;
@@ -720,15 +751,16 @@ function openPicker() {
 }
 .picker-tab-count {
   margin-left: 6px; font-size: 11px; font-weight: 400;
-  color: rgba(255, 255, 255, 0.3); font-family: 'SF Mono', 'Cascadia Code', monospace;
+  color: var(--picker-tab-count-color, rgba(255, 255, 255, 0.3));
+  font-family: 'SF Mono', 'Cascadia Code', monospace;
 }
 
 .picker-body { padding: 16px 20px; overflow-y: auto; }
 .picker-grid { display: flex; flex-wrap: wrap; gap: 12px; }
 
 .picker-item {
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 10px; background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--picker-item-border, rgba(255, 255, 255, 0.08));
+  border-radius: 10px; background: var(--picker-item-bg, rgba(255, 255, 255, 0.03));
   cursor: pointer; transition: all 0.2s; overflow: hidden;
   display: flex; flex-direction: column;
 }
@@ -738,18 +770,17 @@ function openPicker() {
   transform: translateY(-2px);
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
 }
-
 .picker-preview {
-  flex: 1; border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  flex: 1; border-bottom: 1px solid var(--picker-border, rgba(255, 255, 255, 0.06));
   overflow: hidden; padding: 8px;
   display: flex; align-items: center; justify-content: center;
 }
 
 .picker-meta { padding: 8px 10px; display: flex; justify-content: space-between; align-items: center; }
-.picker-title { font-size: 12px; color: rgba(255, 255, 255, 0.75); }
-.picker-size { font-size: 10px; color: rgba(255, 255, 255, 0.3); font-family: 'SF Mono', 'Cascadia Code', 'Menlo', monospace; }
+.picker-title { font-size: 12px; color: var(--picker-title-color, rgba(255, 255, 255, 0.75)); }
+.picker-size { font-size: 10px; color: var(--picker-size-color, rgba(255, 255, 255, 0.3)); font-family: 'SF Mono', 'Cascadia Code', 'Menlo', monospace; }
 
-.picker-empty { text-align: center; color: rgba(255, 255, 255, 0.35); padding: 32px 0; }
+.picker-empty { text-align: center; color: var(--picker-empty-color, rgba(255, 255, 255, 0.35)); padding: 32px 0; }
 
 .toolbar {
   position: fixed; bottom: 24px; left: 24px;

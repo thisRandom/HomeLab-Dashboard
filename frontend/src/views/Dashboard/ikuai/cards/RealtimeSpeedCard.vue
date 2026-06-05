@@ -53,6 +53,13 @@ function formatCompact(bps: number): string {
   return (bps / 1048576).toFixed(1) + 'M'
 }
 
+function formatSpeedTooltip(kbps: number): string {
+  if (kbps === 0) return '0 B/s'
+  if (kbps < 1) return '< 1 KB/s'
+  if (kbps < 1024) return kbps.toFixed(1) + ' KB/s'
+  return (kbps / 1024).toFixed(2) + ' MB/s'
+}
+
 const upSpeed = computed(() => splitSpeed(upVal.value))
 const downSpeed = computed(() => splitSpeed(downVal.value))
 
@@ -176,7 +183,30 @@ const lineOption = computed(() => {
       max: currentYMax.value,
       show: false,
     },
-    tooltip: { show: false },
+    tooltip: {
+      trigger: 'axis',
+      appendToBody: true,
+      zIndex: 10000,
+      backgroundColor: props.theme === 'light' ? 'rgba(255,255,255,0.95)' : 'rgba(20,20,25,0.95)',
+      borderColor: props.theme === 'light' ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)',
+      textStyle: {
+        color: textColor.value,
+        fontSize: 11,
+      },
+      formatter: (params: any) => {
+        if (params.length > 0) {
+          const time = params[0].axisValue
+          let html = time
+          params.forEach((p: any) => {
+            const label = p.seriesIndex === 0 ? '↑ 上传' : '↓ 下载'
+            const color = p.seriesIndex === 0 ? '#6C8EFF' : '#2DD4BF'
+            html += `<br/>${label}: <b style="color:${color}">${formatSpeedTooltip(p.value)}</b>`
+          })
+          return html
+        }
+        return ''
+      },
+    },
     series: [
       {
         type: 'line',

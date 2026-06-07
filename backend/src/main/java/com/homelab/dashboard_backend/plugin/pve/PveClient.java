@@ -53,6 +53,12 @@ public class PveClient {
     // SSH 长连接
     private Session sshSession;
     private final Object sshLock = new Object();
+    private final java.util.concurrent.ScheduledExecutorService sshKillScheduler =
+            java.util.concurrent.Executors.newSingleThreadScheduledExecutor(r -> {
+                Thread t = new Thread(r, "ssh-kill-timer");
+                t.setDaemon(true);
+                return t;
+            });
 
     public PveClient(String host, int port, String nodeName, String apiToken,
                      String sshHost, int sshPort, String sshUser, String sshPassword, String sshKeyPath) {
@@ -227,6 +233,14 @@ public class PveClient {
     }
 
     /**
+     * 彻底关闭 SSH 客户端资源（在 plugin destroy 时调用）
+     */
+    public void destroy() {
+        disconnectSsh();
+        sshKillScheduler.shutdownNow();
+    }
+
+    /**
      * 通过 SSH 在 PVE 节点上执行命令（复用长连接）
      * 返回命令输出文本，失败返回 null
      */
@@ -234,6 +248,8 @@ public class PveClient {
         if (sshHost == null || sshHost.isEmpty()) return null;
 
         synchronized (sshLock) {
+            ChannelExec channel = null;
+            java.util.concurrent.ScheduledFuture<?> killTimer = null;
             try {
                 // 连接不存在或已断开，自动重连
                 if (sshSession == null || !sshSession.isConnected()) {
@@ -245,13 +261,19 @@ public class PveClient {
                     }
                 }
 
-                ChannelExec channel = (ChannelExec) sshSession.openChannel("exec");
+                channel = (ChannelExec) sshSession.openChannel("exec");
                 channel.setCommand(command);
                 channel.setInputStream(null);
                 channel.setErrStream(null);
 
                 java.io.InputStream in = channel.getInputStream();
                 channel.connect(3000);
+
+                // 2 秒超时保护：超时自动关闭 channel，阻塞的 read 会抛异常退出
+                final ChannelExec ch = channel;
+                killTimer = sshKillScheduler.schedule(() -> {
+                    try { if (ch.isConnected()) ch.disconnect(); } catch (Exception ignored) {}
+                }, 2, java.util.concurrent.TimeUnit.SECONDS);
 
                 StringBuilder output = new StringBuilder();
                 byte[] buffer = new byte[1024];
@@ -260,13 +282,17 @@ public class PveClient {
                     output.append(new String(buffer, 0, len));
                 }
 
-                channel.disconnect();
                 return output.toString().trim();
             } catch (Exception e) {
                 log.warn("SSH execute failed on {}: {} - {}", sshHost, command, e.getMessage());
                 // 连接异常时断开，下次调用会自动重连
                 disconnectSsh();
                 return null;
+            } finally {
+                if (killTimer != null) killTimer.cancel(false);
+                if (channel != null && channel.isConnected()) {
+                    try { channel.disconnect(); } catch (Exception ignored) {}
+                }
             }
         }
     }

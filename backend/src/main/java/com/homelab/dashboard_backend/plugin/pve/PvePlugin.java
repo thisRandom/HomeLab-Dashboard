@@ -504,7 +504,7 @@ public class PvePlugin implements CollectorPlugin {
     public void destroy() {
         healthy = false;
         if (client != null) {
-            client.disconnectSsh();
+            client.destroy();
         }
         client = null;
         log.info("PVE plugin destroyed");

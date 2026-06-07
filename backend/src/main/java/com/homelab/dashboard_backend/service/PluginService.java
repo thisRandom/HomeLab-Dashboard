@@ -5,6 +5,7 @@ import com.homelab.dashboard_backend.mapper.PluginMapper;
 import com.homelab.dashboard_backend.plugin.CollectorPlugin;
 import com.homelab.dashboard_backend.plugin.ikuai.IkuaiPlugin;
 import com.homelab.dashboard_backend.plugin.pve.PvePlugin;
+import com.homelab.dashboard_backend.plugin.storeos.StoreosPlugin;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -64,6 +65,7 @@ public class PluginService {
         switch (pluginId) {
             case "ikuai": return createIkuai();
             case "pve": return createPve();
+            case "storeos": return createStoreos();
             default:
                 log.warn("Unknown plugin: {}", pluginId);
                 return null;
@@ -103,6 +105,24 @@ public class PluginService {
         plugin.initialize(config);
 
         pluginMapper.setStatus("pve", plugin.isHealthy() ? "online" : "error");
+        return plugin;
+    }
+
+    private StoreosPlugin createStoreos() {
+        List<Map<String, String>> rows = pluginConfigMapper.selectByPluginId("storeos");
+        Map<String, String> config = new HashMap<>();
+        for (Map<String, String> row : rows) {
+            config.put(row.get("config_key"), row.get("config_value"));
+        }
+        if (config.isEmpty()) {
+            log.error("No config found for storeos plugin in database, please run sql/storeos.sql first");
+            return null;
+        }
+
+        StoreosPlugin plugin = new StoreosPlugin();
+        plugin.initialize(config);
+
+        pluginMapper.setStatus("storeos", plugin.isHealthy() ? "online" : "error");
         return plugin;
     }
 
@@ -217,6 +237,7 @@ public class PluginService {
         switch (pluginId) {
             case "ikuai": return new IkuaiPlugin();
             case "pve": return new PvePlugin();
+            case "storeos": return new StoreosPlugin();
             default:
                 log.warn("Unknown plugin: {}", pluginId);
                 return null;

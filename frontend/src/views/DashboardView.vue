@@ -23,6 +23,14 @@ import PveVmListCard from './Dashboard/pve/cards/PveVmListCard.vue'
 import PveNodeInfoCard from './Dashboard/pve/cards/PveNodeInfoCard.vue'
 import PveTempCard from './Dashboard/pve/cards/PveTempCard.vue'
 import PveTemperatureCard from './Dashboard/pve/cards/PveTemperatureCard.vue'
+import StoreosNodeStatus from './Dashboard/storeos/cards/StoreosNodeStatus.vue'
+import StoreosSystemInfo from './Dashboard/storeos/cards/StoreosSystemInfo.vue'
+import StoreosRealtimeTraffic from './Dashboard/storeos/cards/StoreosRealtimeTraffic.vue'
+import StoreosTrafficDonut from './Dashboard/storeos/cards/StoreosTrafficDonut.vue'
+import StoreosDhcpList from './Dashboard/storeos/cards/StoreosDhcpList.vue'
+import StoreosInterfaceList from './Dashboard/storeos/cards/StoreosInterfaceList.vue'
+import StoreosDeviceList from './Dashboard/storeos/cards/StoreosDeviceList.vue'
+import StoreosConntrack from './Dashboard/storeos/cards/StoreosConntrack.vue'
 
 const COLS = 12
 const GAP = 2
@@ -68,6 +76,15 @@ const cardDefs: CardDef[] = [
   { type: 'pveNodeInfo', title: 'PVE 节点信息', icon: '🖧', w: 2, h: 1, freq: 'slow', pluginId: 'pve', component: markRaw(PveNodeInfoCard) },
   { type: 'pveTempCard', title: 'PVE CPU温度', icon: '🌡️', w: 2, h: 2, freq: 'realtime', pluginId: 'pve', component: markRaw(PveTempCard) },
   { type: 'pveTemperature', title: 'PVE CPU温度', icon: '🌡️', w: 1, h: 1, freq: 'realtime', pluginId: 'pve', component: markRaw(PveTemperatureCard) },
+  // OpenWrt cards
+  { type: 'storeosNodeStatus', title: 'OpenWrt 状态', icon: '🖥️', w: 2, h: 1, freq: 'realtime', pluginId: 'storeos', component: markRaw(StoreosNodeStatus) },
+  { type: 'storeosSystemInfo', title: 'OpenWrt 信息', icon: '🖧', w: 2, h: 1, freq: 'slow', pluginId: 'storeos', component: markRaw(StoreosSystemInfo) },
+  { type: 'storeosRealtimeTraffic', title: 'OpenWrt 实时流量', icon: '⚡', w: 3, h: 2, freq: 'realtime', pluginId: 'storeos', component: markRaw(StoreosRealtimeTraffic) },
+  { type: 'storeosTrafficDonut', title: 'OpenWrt 累计流量', icon: '📡', w: 1, h: 1, freq: 'slow', pluginId: 'storeos', component: markRaw(StoreosTrafficDonut) },
+  { type: 'storeosDhcpList', title: 'OpenWrt DHCP 客户端', icon: '📱', w: 2, h: 3, freq: 'frequent', pluginId: 'storeos', component: markRaw(StoreosDhcpList) },
+  { type: 'storeosInterfaceList', title: 'OpenWrt 网口状态', icon: '🌐', w: 1, h: 2, freq: 'slow', pluginId: 'storeos', component: markRaw(StoreosInterfaceList) },
+  { type: 'storeosDeviceList', title: 'OpenWrt 在线设备', icon: '📱', w: 2, h: 3, freq: 'frequent', pluginId: 'storeos', component: markRaw(StoreosDeviceList) },
+  { type: 'storeosConntrack', title: 'OpenWrt 连接追踪', icon: '🔗', w: 2, h: 1, freq: 'frequent', pluginId: 'storeos', component: markRaw(StoreosConntrack) },
 ]
 
 const editing = ref(false)
@@ -137,6 +154,7 @@ const pluginTabs = computed(() => {
 const pluginNames: Record<string, string> = {
   ikuai: 'iKuai',
   pve: 'PVE',
+  storeos: 'OpenWrt',
   openwrt: 'OpenWrt',
   fnos: 'FnOS',
 }

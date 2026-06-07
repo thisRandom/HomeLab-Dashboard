@@ -31,8 +31,12 @@ public class IkuaiClient {
     private static final String LOGIN_PATH = "/Action/login";
     private static final String CALL_PATH = "/Action/call";
     private static final int LOGIN_SUCCESS = 10000;
-    private static final int SESSION_EXPIRED = 10014;
-    private static final int CALL_SUCCESS = 30000;
+    // V3: Result=10014, V4: code=1008
+    private static final int SESSION_EXPIRED_V3 = 10014;
+    private static final int SESSION_EXPIRED_V4 = 1008;
+    // V3: Result=30000, V4: code=0
+    private static final int CALL_SUCCESS_V3 = 30000;
+    private static final int CALL_SUCCESS_V4 = 0;
     private static final String SALT = "salt_11";
 
     private final ObjectMapper objectMapper = new ObjectMapper()
